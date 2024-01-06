@@ -42,7 +42,7 @@ def normalize_prop_name(name):
 
 def fix_block_name(name):
   s = re.sub(r'[- ]+', '_', name)
-  return 'In_' + s
+  return f'In_{s}'
 
 def print_ranges(ranges):
   for (start, end) in ranges:
@@ -51,18 +51,18 @@ def print_ranges(ranges):
   print(len(ranges))
 
 def print_prop_and_index(prop, i):
-  print("%-35s %3d" % (prop + ',', i))
+  print("%-35s %3d" % (f'{prop},', i))
   PropIndex[prop] = i
 
 PRINT_CACHE = { }
 
 def print_property(prop, data, desc):
   print('')
-  print("/* PROPERTY: '%s': %s */" % (prop, desc))
+  print(f"/* PROPERTY: '{prop}': {desc} */")
 
   prev_prop = dic_find_by_value(PRINT_CACHE, data)
   if prev_prop is not None:
-    print("#define CR_%s CR_%s" % (prop, prev_prop))
+    print(f"#define CR_{prop} CR_{prev_prop}")
   else:
     PRINT_CACHE[prop] = data
     print("static const OnigCodePoint")
@@ -74,11 +74,7 @@ def print_property(prop, data, desc):
 
 
 def dic_find_by_value(dic, v):
-  for key, val in dic.items():
-    if val == v:
-      return key
-
-  return None
+  return next((key for key, val in dic.items() if val == v), None)
 
 def make_reverse_dic(dic):
   rev = {}
@@ -92,11 +88,7 @@ def make_reverse_dic(dic):
   return rev
 
 def normalize_ranges(in_ranges, sort=False):
-  if sort:
-    ranges = sorted(in_ranges)
-  else:
-    ranges = in_ranges
-
+  ranges = sorted(in_ranges) if sort else in_ranges
   r = []
   prev = None
   for (start, end) in ranges:
@@ -173,18 +165,16 @@ def normalize_ranges_in_dic(dic, sort=False):
 def merge_dic(to_dic, from_dic):
   to_keys   = to_dic.keys()
   from_keys = from_dic.keys()
-  common = list(set(to_keys) & set(from_keys))
-  if len(common) != 0:
-    print("merge_dic: collision: %s" % sorted(common), file=sys.stderr)
+  if common := list(set(to_keys) & set(from_keys)):
+    print(f"merge_dic: collision: {sorted(common)}", file=sys.stderr)
 
   to_dic.update(from_dic)
 
 def merge_props(to_dic, from_dic):
   to_keys   = to_dic.keys()
   from_keys = from_dic.keys()
-  common = list(set(to_keys) & set(from_keys))
-  if len(common) != 0:
-    print("merge_props: collision: %s" % sorted(common), file=sys.stderr)
+  if common := list(set(to_keys) & set(from_keys)):
+    print(f"merge_props: collision: {sorted(common)}", file=sys.stderr)
 
   for k in from_keys:
     to_dic[k] = True
@@ -228,7 +218,7 @@ def parse_unicode_data_file(f):
       assigned.append((start, end))
       add_range_into_dic(dic, prop, start, end)
       if len(prop) == 2:
-        add_range_into_dic(dic, prop[0:1], start, end)
+        add_range_into_dic(dic, prop[:1], start, end)
 
   normalize_ranges_in_dic(dic)
   return dic, assigned
@@ -248,8 +238,7 @@ def parse_properties(path, klass, prop_prefix = None, version_reg = None):
         if version_match is not None:
           continue
 
-      m = PR_LINE_REG.match(s)
-      if m:
+      if m := PR_LINE_REG.match(s):
         prop = m.group(3)
         if prop_prefix is not None:
           prop = prop_prefix + prop
@@ -407,7 +396,7 @@ def set_max_prop_name(name):
 def entry_prop_name(name, index):
   set_max_prop_name(name)
   if OUTPUT_LIST_MODE and index >= len(POSIX_LIST):
-    print("%s" % (name), file=UPF)
+    print(f"{name}", file=UPF)
 
 def entry_and_print_prop_and_index(name, index):
   entry_prop_name(name, index)
@@ -458,12 +447,12 @@ INCLUDE_GRAPHEME_CLUSTER_DATA = False
 
 for i in range(1, argc):
   arg = argv[i]
-  if arg == '-posix':
-    POSIX_ONLY = True
-  elif arg == '-gc':
+  if arg == '-gc':
     INCLUDE_GRAPHEME_CLUSTER_DATA = True
+  elif arg == '-posix':
+    POSIX_ONLY = True
   else:
-    print("Invalid argument: %s" % arg, file=sys.stderr)
+    print(f"Invalid argument: {arg}", file=sys.stderr)
 
 
 OUTPUT_LIST_MODE = not(POSIX_ONLY)
@@ -525,11 +514,7 @@ print(COPYRIGHT)
 print('')
 
 for prop in POSIX_LIST:
-  if prop == 'PosixPunct':
-    desc = "POSIX [[:punct:]]"
-  else:
-    desc = "POSIX [[:%s:]]" % prop
-
+  desc = "POSIX [[:punct:]]" if prop == 'PosixPunct' else f"POSIX [[:{prop}:]]"
   print_property(prop, DIC[prop], desc)
 
 print('')
@@ -556,14 +541,14 @@ print('')
 print("static const OnigCodePoint*\nconst CodeRanges[] = {")
 
 for prop in POSIX_LIST:
-  print("  CR_%s," % prop)
+  print(f"  CR_{prop},")
 
 if not(POSIX_ONLY):
   for prop in PROP_LIST:
-    print("  CR_%s," % prop)
+    print(f"  CR_{prop},")
 
   for prop in BLOCKS:
-    print("  CR_%s," % prop)
+    print(f"  CR_{prop},")
 
 s = '''};
 
@@ -604,7 +589,7 @@ if not(POSIX_ONLY):
   for (nk, k, v) in NALIASES:
     nv = normalize_prop_name(v)
     if PropIndex.get(nk, None) is not None:
-      print("ALIASES: already exists: %s => %s" % (k, v), file=sys.stderr)
+      print(f"ALIASES: already exists: {k} => {v}", file=sys.stderr)
       continue
     aindex = PropIndex.get(nv, None)
     if aindex is None:

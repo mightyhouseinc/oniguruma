@@ -24,13 +24,12 @@ def conv(enc, s):
     c = s[i]
     if c == '\\':
       c = s[i+1]
-      if c == '\\' or c == '"':
-        r = add_char(enc, r, "\\" + c)
-        i += 2
-        continue
-      else:
+      if c not in ['\\', '"']:
         raise("Unknown escape {0}".format(s))
 
+      r = add_char(enc, r, "\\" + c)
+      i += 2
+      continue
     r = add_char(enc, r, c)
     i += 1
 
@@ -44,11 +43,10 @@ def main(enc):
       print(s)
       continue
 
-    if s[0] == '"' and s[-1] == '"':
-      s = conv(enc, s[1:-1])
-      print("\"{0}\"".format(s))
-    else:
+    if s[0] != '"' or s[-1] != '"':
       raise("Invalid format {0}".format(s))
+    s = conv(enc, s[1:-1])
+    print("\"{0}\"".format(s))
 
 def usage(argv):
   raise RuntimeError("Usage: python {0} utf16_be/utf16_le".format(argv[0]))
