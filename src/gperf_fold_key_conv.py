@@ -47,9 +47,7 @@ def parse_line(s, key_len):
     r = re.sub(REG_RETURN_WL, 'return index;', s)
     if r != s: return r
     r = re.sub(REG_RETURN_0, 'return -1;', s)
-    if r != s: return r
-
-    return s
+    return r if r != s else s
 
 def parse_file(f, key_len):
     print("/* This file was converted by gperf_fold_key_conv.py\n      from gperf output file. */")

@@ -32,23 +32,15 @@ def print_ranges(ranges):
     print("0x%06x, 0x%06x" % (start, end))
 
 def print_prop_and_index(prop, i):
-  print("%-35s %3d" % (prop + ',', i))
+  print("%-35s %3d" % (f'{prop},', i))
   PropIndex[prop] = i
 
 def dic_find_by_value(dic, v):
-  for key, val in dic.items():
-    if val == v:
-      return key
-
-  return None
+  return next((key for key, val in dic.items() if val == v), None)
 
 
 def normalize_ranges(in_ranges, sort=False):
-  if sort:
-    ranges = sorted(in_ranges)
-  else:
-    ranges = in_ranges
-
+  ranges = sorted(in_ranges) if sort else in_ranges
   r = []
   prev = None
   for (start, end) in ranges:
@@ -164,8 +156,7 @@ def parse_properties(path):
         if VERSION_INFO[0] < 0:
           check_version_info(s)
 
-      m = PR_LINE_REG.match(s)
-      if m:
+      if m := PR_LINE_REG.match(s):
         prop = m.group(3)
         if m.group(2):
           start = int(m.group(1), 16)
@@ -233,9 +224,7 @@ print('')
 ranges = []
 for prop in PROPS:
   rs = DIC[prop]
-  for (start, end) in rs:
-    ranges.append((start, end, prop))
-
+  ranges.extend((start, end, prop) for start, end in rs)
 ranges = sorted(ranges, key=lambda x: x[0])
 
 prev = -1
@@ -246,7 +235,7 @@ for (start, end, prop) in ranges:
 
 print('/*')
 for prop in PROPS:
-  print("%s" % prop)
+  print(f"{prop}")
 print('*/')
 print('')
 
@@ -255,12 +244,8 @@ print("static int EGCB_RANGE_NUM = %d;" % num_ranges)
 
 print('static EGCB_RANGE_TYPE EGCB_RANGES[] = {')
 for i, (start, end, prop) in enumerate(ranges):
-  if i == num_ranges - 1:
-    comma = ''
-  else:
-    comma = ','
-
-  type_name = 'EGCB_' + prop
+  comma = '' if i == num_ranges - 1 else ','
+  type_name = f'EGCB_{prop}'
   print(" {0x%06x, 0x%06x, %s }%s" % (start, end, type_name, comma))
 
 print('};')

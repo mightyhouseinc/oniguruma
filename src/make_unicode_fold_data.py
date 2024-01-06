@@ -150,11 +150,9 @@ def parse_line(s):
     return True
 
 def parse_file(f):
-    line = f.readline()
-    while line:
+    while line := f.readline():
         s = line.strip()
         parse_line(s)
-        line = f.readline()
 
 def make_locale():
     for unfold, te in TURKISH_UNFOLDS.items():
@@ -191,7 +189,7 @@ def divide_by_fold_len(d):
     return (sl1, sl2, sl3)
 
 def output_comment(f, s):
-    f.write(" /* %s */" % s)
+    f.write(f" /* {s} */")
 
 def output_data_n1(f, n, fn, c, out_comment):
     for k, e in fn:
@@ -204,20 +202,16 @@ def output_data_n1(f, n, fn, c, out_comment):
         f.write("/*%4d*/ " % c)
         for i in range(0, n):
             s = form16(e.fold[i], 8)
-            f.write(" %s," % s)
+            f.write(f" {s},")
 
         usize = len(e.unfolds)
         f.write("  %d," % usize)
         for u in e.unfolds:
             s = form16(u, 8)
-            f.write(" %s," % s)
+            f.write(f" {s},")
 
         if out_comment and n == 1 and e.comment is not None:
-            if len(e.comment) < 35:
-                s = e.comment
-            else:
-                s = e.comment[0:33] + '..'
-
+            s = e.comment if len(e.comment) < 35 else f'{e.comment[:33]}..'
             output_comment(f, s)
 
         f.write("\n")

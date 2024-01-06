@@ -39,18 +39,14 @@ def parse_line(s):
     r = re.sub(REG_GET_CODE, 'OnigCodePoint gcode = wordlist[key].code;', s)
     if r != s: return r
     r = re.sub(REG_CODE_CHECK, 'if (code == gcode && wordlist[key].index >= 0)', s)
-    if r != s: return r
-
-    return s
+    return r if r != s else s
 
 def parse_file(f):
     print("/* This file was converted by gperf_unfold_key_conv.py\n      from gperf output file. */")
 
-    line = f.readline()
-    while line:
+    while line := f.readline():
         s = parse_line(line)
         print(s)
-        line = f.readline()
 
 
 # main
